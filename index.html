@@ -1,0 +1,773 @@
+<!DOCTYPE html>
+<html lang="he" dir="rtl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Poker Night</title>
+<meta name="theme-color" content="#111827">
+<style>
+:root{
+  --bg-1:#0b1020;--bg-2:#111827;--card:rgba(255,255,255,.08);--card2:rgba(255,255,255,.05);
+  --border:rgba(255,255,255,.12);--text:#f8fafc;--muted:#cbd5e1;--soft:#94a3b8;
+  --accent:#22c55e;--accent2:#16a34a;--danger:rgba(251,113,133,.12);--good:#4ade80;--bad:#fb7185;--warn:#fbbf24;
+}
+*{box-sizing:border-box}
+html,body{margin:0;padding:0}
+body{
+  font-family:Arial,sans-serif;color:var(--text);
+  background:
+    radial-gradient(circle at top right, rgba(34,197,94,.18), transparent 24%),
+    radial-gradient(circle at top left, rgba(59,130,246,.16), transparent 25%),
+    linear-gradient(180deg,var(--bg-1),var(--bg-2) 45%,#0f172a 100%);
+  min-height:100vh
+}
+body.view-only .edit-only{display:none!important}
+.container{max-width:1180px;margin:0 auto;padding:10px 10px 64px}
+.hero,.card{background:var(--card);border:1px solid var(--border);border-radius:22px}
+.hero{padding:16px;margin-top:8px}
+.hero-top{display:flex;justify-content:space-between;gap:12px;align-items:flex-start;flex-wrap:wrap}
+.eyebrow{display:inline-flex;gap:8px;align-items:center;padding:7px 12px;border-radius:999px;background:rgba(34,197,94,.12);border:1px solid rgba(34,197,94,.18);font-size:13px}
+h1,h2,p{margin:0}
+h1{font-size:26px;margin-top:8px}
+.hero-actions{display:flex;gap:8px;flex-wrap:wrap}
+button,.button-link{
+  border:0;border-radius:14px;padding:12px 14px;cursor:pointer;color:#fff;
+  background:linear-gradient(180deg,var(--accent),var(--accent2));font-size:14px;font-weight:700;min-height:44px;
+  text-decoration:none;display:inline-flex;align-items:center;justify-content:center
+}
+button.secondary,.button-link.secondary{background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.12);color:var(--text)}
+button.warning{background:rgba(251,191,36,.16);color:#fde68a;border:1px solid rgba(251,191,36,.24)}
+button.danger{background:var(--danger);border:1px solid rgba(251,113,133,.24);color:#fecdd3;min-height:auto;padding:10px 12px}
+.top-stats-bar{
+  position:sticky;top:6px;z-index:30;display:flex;gap:8px;flex-wrap:wrap;
+  padding:10px 12px;margin:10px 0 12px;border-radius:16px;background:rgba(17,24,39,.92);
+  border:1px solid rgba(255,255,255,.1);backdrop-filter:blur(8px)
+}
+.top-stats-bar .stat-chip{
+  padding:7px 10px;border-radius:999px;background:rgba(255,255,255,.08);font-size:13px;color:var(--muted);white-space:nowrap
+}
+.layout{display:grid;grid-template-columns:1.45fr 1fr;gap:14px}
+.stack{display:grid;gap:14px}
+.card-inner{padding:16px}
+.card-title{font-size:18px;margin-bottom:10px}
+.field{display:grid;gap:8px}
+label{font-size:13px;color:var(--muted);font-weight:700}
+input,select,textarea{
+  width:100%;background:rgba(255,255,255,.08);color:var(--text);border:1px solid rgba(255,255,255,.14);
+  border-radius:14px;padding:12px;font-size:16px;outline:none
+}
+select option{color:#111827}
+.form-grid{display:grid;grid-template-columns:1fr 150px 140px 110px;gap:10px;align-items:end}
+.preset-list,.chips,.quick-actions,.summary-actions,.quick-nav{display:flex;flex-wrap:wrap;gap:8px}
+.preset-item,.chip{
+  background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.08);border-radius:14px;color:#e2e8f0;padding:8px 10px;font-size:13px
+}
+.preset-item{display:inline-flex;align-items:center;gap:8px}
+.preset-item input[type=checkbox]{width:18px;height:18px;accent-color:var(--accent)}
+.preset-item select{width:auto;min-width:82px;padding:8px 10px;border-radius:12px;font-size:13px}
+.quick-nav{overflow-x:auto;padding-bottom:4px;margin-bottom:10px;flex-wrap:nowrap}
+.quick-nav button{min-height:auto;padding:10px 12px;border-radius:999px;white-space:nowrap;background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12)}
+.quick-nav button.active{background:linear-gradient(180deg,var(--accent),var(--accent2))}
+.players-accordion,.issues,.summary-grid,.bitlist,.stats-grid{display:grid;gap:10px}
+.player-item,.summary-card,.issue,.bititem,.stat-card{
+  background:var(--card2);border:1px solid rgba(255,255,255,.08);border-radius:18px;padding:14px
+}
+.player-item{padding:0;overflow:hidden}
+.player-header{
+  width:100%;background:transparent;border:0;padding:14px;display:grid;grid-template-columns:1.3fr 1fr 1fr auto;gap:10px;
+  align-items:center;text-align:right;min-height:auto
+}
+.player-name{font-size:18px;font-weight:800}
+.header-amount{font-size:16px;font-weight:800}
+.chevron{color:var(--soft);transition:transform .2s ease}
+.player-item.open .chevron{transform:rotate(180deg)}
+.player-body{display:none;padding:0 14px 14px;border-top:1px solid rgba(255,255,255,.08)}
+.player-item.open .player-body{display:block}
+.body-grid{display:grid;grid-template-columns:1.2fr 220px 220px;gap:12px;align-items:start;margin-top:12px}
+.quick-actions button,.quick-actions select{min-height:auto;padding:10px 12px;border-radius:12px;width:auto}
+.pill{display:inline-flex;padding:6px 10px;border-radius:999px;background:rgba(255,255,255,.08);font-size:12px;color:var(--muted);margin:0 0 8px 0}
+.stat-label,.meta-label{font-size:12px;color:var(--soft);margin-bottom:6px}
+.stat-value,.amount{font-size:22px;font-weight:800}
+.good{color:var(--good)} .bad{color:var(--bad)}
+.summary-card{display:grid;grid-template-columns:1.1fr 1fr 1fr 1fr 1fr;gap:10px;align-items:center}
+.bititem{display:grid;grid-template-columns:1fr auto;gap:12px;align-items:center}
+.empty{padding:16px;border-radius:16px;border:1px dashed rgba(255,255,255,.16);color:var(--soft);background:rgba(255,255,255,.04)}
+.small-note{font-size:12px;color:var(--soft);line-height:1.5}
+textarea{min-height:100px;resize:vertical}
+@media (max-width:1080px){
+  .layout,.summary-card,.bititem,.body-grid,.player-header,.form-grid{grid-template-columns:1fr}
+}
+</style>
+</head>
+<body>
+<div class="container">
+  <section class="hero">
+    <div class="hero-top">
+      <div>
+        <div class="eyebrow">♠️ Poker Night</div>
+        <h1>מחשבון פוקר</h1>
+      </div>
+      <div class="hero-actions edit-only">
+        <button id="finishGameBtn" class="warning">סיים משחק</button>
+        <button id="resetAllBtn" class="secondary">איפוס</button>
+        <button id="saveNowBtn" class="secondary">שמור</button>
+      </div>
+    </div>
+  </section>
+
+  <div id="topStatsBar" class="top-stats-bar"></div>
+
+  <div class="layout">
+    <div class="stack">
+      <section class="card">
+        <div class="card-inner">
+          <div class="card-title">משחק</div>
+
+          <div class="field">
+            <label for="gameName">שם המשחק</label>
+            <input id="gameName" placeholder="שם המשחק">
+          </div>
+
+          <div class="field edit-only" style="margin-top:12px;">
+            <label>שחקנים קבועים</label>
+            <div id="presetPlayers" class="preset-list"></div>
+            <div style="margin-top:8px"><button id="addSelectedPlayersBtn" class="secondary">הוסף נבחרים</button></div>
+          </div>
+
+          <div class="form-grid edit-only" style="margin-top:12px;">
+            <div class="field">
+              <label for="newPlayerName">שחקן חדש</label>
+              <input id="newPlayerName" placeholder="שם שחקן">
+            </div>
+            <div class="field">
+              <label for="defaultBuyIn">כניסה התחלתית</label>
+              <input id="defaultBuyIn" type="number" value="50">
+            </div>
+            <div class="field">
+              <label for="defaultBuyInMethod">אמצעי</label>
+              <select id="defaultBuyInMethod">
+                <option value="cash" selected>מזומן</option>
+                <option value="bit">ביט</option>
+              </select>
+            </div>
+            <button id="addPlayerBtn">הוסף</button>
+          </div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-inner">
+          <div class="card-title">שחקנים</div>
+          <div id="playerQuickNav" class="quick-nav"></div>
+          <input id="playerSearch" placeholder="חיפוש שחקן..." style="margin-bottom:10px">
+          <div id="playersList" class="players-accordion"></div>
+        </div>
+      </section>
+    </div>
+
+    <div class="stack">
+      <section class="card">
+        <div class="card-inner">
+          <div class="card-title">פילוח הקופה</div>
+          <div id="potBreakdown" class="stats-grid"></div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-inner">
+          <div class="card-title">בדיקות</div>
+          <div id="issuesList" class="issues"></div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-inner">
+          <div class="card-title">סיכום לפי שחקן</div>
+          <div id="summaryList" class="summary-grid"></div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-inner">
+          <div class="card-title">סיכום העברות ביט</div>
+          <div id="bitTransfers" class="bitlist"></div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-inner">
+          <div class="card-title">כמה כל שחקן עוד צריך לקבל בביט</div>
+          <div id="bitList" class="bitlist"></div>
+        </div>
+      </section>
+
+      <section class="card">
+        <div class="card-inner">
+          <div class="card-title">שיתוף לינק לצפייה</div>
+          <div class="share-box">
+            <textarea id="shareLink" readonly></textarea>
+            <div class="summary-actions">
+              <a id="whatsAppShare" class="button-link" target="_blank" rel="noreferrer">שלח לינק בוואטסאפ</a>
+              <button id="copyLinkBtn" class="secondary">העתק לינק</button>
+            </div>
+            <div class="small-note">הלינק נפתח במצב צפייה בלבד. הוא כולל snapshot מקוצר כדי לעבוד טוב יותר גם באייפון.</div>
+          </div>
+        </div>
+      </section>
+    </div>
+  </div>
+</div>
+
+<script>
+const STORAGE_KEY = "poker-home-game-local-pro-v8";
+const PRESET_PLAYERS = ["יגאל","ליאור","דניאל","ניר","ניסן","דין","זוהר","מני","אשר","רומן","איתי"];
+const VIEW_ONLY = new URLSearchParams(location.search).get("view") === "1";
+
+const els = {
+  gameName: document.getElementById("gameName"),
+  newPlayerName: document.getElementById("newPlayerName"),
+  defaultBuyIn: document.getElementById("defaultBuyIn"),
+  defaultBuyInMethod: document.getElementById("defaultBuyInMethod"),
+  addPlayerBtn: document.getElementById("addPlayerBtn"),
+  addSelectedPlayersBtn: document.getElementById("addSelectedPlayersBtn"),
+  saveNowBtn: document.getElementById("saveNowBtn"),
+  resetAllBtn: document.getElementById("resetAllBtn"),
+  finishGameBtn: document.getElementById("finishGameBtn"),
+  playersList: document.getElementById("playersList"),
+  summaryList: document.getElementById("summaryList"),
+  issuesList: document.getElementById("issuesList"),
+  presetPlayers: document.getElementById("presetPlayers"),
+  shareLink: document.getElementById("shareLink"),
+  whatsAppShare: document.getElementById("whatsAppShare"),
+  copyLinkBtn: document.getElementById("copyLinkBtn"),
+  bitList: document.getElementById("bitList"),
+  bitTransfers: document.getElementById("bitTransfers"),
+  playerQuickNav: document.getElementById("playerQuickNav"),
+  playerSearch: document.getElementById("playerSearch"),
+  potBreakdown: document.getElementById("potBreakdown"),
+  topStatsBar: document.getElementById("topStatsBar")
+};
+
+const defaultState = {
+  gameName: "פוקר עם חברים",
+  defaultBuyIn: 50,
+  defaultBuyInMethod: "cash",
+  gameFinished: false,
+  players: [],
+  expandedPlayerId: null
+};
+
+function clone(obj){ return JSON.parse(JSON.stringify(obj)); }
+
+function normalizeState(parsed){
+  return {
+    gameName: parsed.gameName || defaultState.gameName,
+    defaultBuyIn: Number(parsed.defaultBuyIn) || defaultState.defaultBuyIn,
+    defaultBuyInMethod: parsed.defaultBuyInMethod || "cash",
+    gameFinished: !!parsed.gameFinished,
+    expandedPlayerId: parsed.expandedPlayerId || null,
+    players: (parsed.players || []).map((p) => ({
+      id: p.id || crypto.randomUUID(),
+      name: p.name || "שחקן",
+      buyIns: Array.isArray(p.buyIns)
+        ? p.buyIns.map((b) => ({ amount: Number(b.amount) || 0, method: b.method === "bit" ? "bit" : "cash" }))
+        : [],
+      cashOut: p.cashOut === "" ? "" : Number(p.cashOut) || 0,
+      finalCash: Number(p.finalCash) || 0,
+      compactInvested: Number(p.compactInvested) || 0,
+      compactBit: Number(p.compactBit) || 0,
+      compactCash: Number(p.compactCash) || 0
+    }))
+  };
+}
+
+function loadSharedState(){
+  try{
+    const hash = location.hash || "";
+    if(!hash.startsWith("#data=")) return null;
+    const encoded = decodeURIComponent(hash.slice(6));
+    const json = decodeURIComponent(escape(atob(encoded)));
+    const parsed = JSON.parse(json);
+    if(!parsed || !Array.isArray(parsed.players)) return null;
+    return normalizeState(parsed);
+  } catch { return null; }
+}
+
+function loadState(){
+  try{
+    const raw = localStorage.getItem(STORAGE_KEY);
+    if(!raw) return clone(defaultState);
+    const parsed = JSON.parse(raw);
+    if(!parsed || !Array.isArray(parsed.players)) return clone(defaultState);
+    return normalizeState(parsed);
+  } catch { return clone(defaultState); }
+}
+
+let state = VIEW_ONLY && loadSharedState() ? loadSharedState() : loadState();
+if(VIEW_ONLY) document.body.classList.add("view-only");
+
+function saveState(){
+  if(VIEW_ONLY) return;
+  localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+}
+
+function buildPresetPlayers(){
+  els.presetPlayers.innerHTML = PRESET_PLAYERS.map((name) => `
+    <label class="preset-item">
+      <input type="checkbox" value="${name}">
+      <span>${name}</span>
+      <select id="preset-method-${name}">
+        <option value="cash" selected>מזומן</option>
+        <option value="bit">ביט</option>
+      </select>
+    </label>
+  `).join("");
+}
+
+function formatCurrency(value){
+  return new Intl.NumberFormat("he-IL", { style:"currency", currency:"ILS", maximumFractionDigits:0 }).format(Number.isFinite(value) ? value : 0);
+}
+
+function methodLabel(method){ return method === "bit" ? "ביט" : "מזומן"; }
+
+function totalBuyIn(player){
+  return player.buyIns.length
+    ? player.buyIns.reduce((sum, entry) => sum + entry.amount, 0)
+    : (Number(player.compactInvested) || 0);
+}
+
+function totalByMethod(player, method){
+  if(player.buyIns.length){
+    return player.buyIns.filter((entry) => entry.method === method).reduce((sum, entry) => sum + entry.amount, 0);
+  }
+  return method === "bit" ? (Number(player.compactBit) || 0) : (Number(player.compactCash) || 0);
+}
+
+function netResult(player){
+  if(player.cashOut === "") return null;
+  return (Number(player.cashOut) || 0) - totalBuyIn(player);
+}
+
+function remainingBit(player){
+  if(player.cashOut === "") return null;
+  return Math.max((Number(player.cashOut) || 0) - (Number(player.finalCash) || 0), 0);
+}
+
+function validateGame(players){
+  const totalBuyIns = players.reduce((sum, p) => sum + totalBuyIn(p), 0);
+  const totalCashOut = players.reduce((sum, p) => sum + (p.cashOut === "" ? 0 : Number(p.cashOut) || 0), 0);
+  const issues = [];
+  if(players.length && players.some((p) => p.cashOut === "")) issues.push("יש שחקנים בלי סכום סופי.");
+  if(players.length && Math.abs(totalBuyIns - totalCashOut) > 0.5) issues.push(`סה״כ הכניסות (${formatCurrency(totalBuyIns)}) לא שווה לסה״כ הסכומים הסופיים (${formatCurrency(totalCashOut)}).`);
+  if(players.some((p) => p.cashOut !== "" && (Number(p.finalCash) || 0) > (Number(p.cashOut) || 0) + 0.01)) issues.push("יש שחקנים שסכום המזומן שקיבלו גבוה מהסכום הסופי שלהם.");
+  return issues;
+}
+
+function escapeHtml(str){
+  return String(str).replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;").replace(/'/g,"&#039;");
+}
+
+function playerExists(name){ return state.players.some((p) => p.name === name); }
+
+function addPlayerWithName(name, methodOverride = null){
+  const buyIn = Number(els.defaultBuyIn.value) || 0;
+  const method = methodOverride ? methodOverride : (els.defaultBuyInMethod.value === "bit" ? "bit" : "cash");
+  if(!name || playerExists(name)) return;
+  const id = crypto.randomUUID();
+  state.players.push({
+    id, name,
+    buyIns: buyIn > 0 ? [{ amount: buyIn, method }] : [],
+    cashOut: "",
+    finalCash: 0,
+    compactInvested: 0,
+    compactBit: 0,
+    compactCash: 0
+  });
+  state.expandedPlayerId = id;
+}
+
+function buildReadonlyLink(){
+  const compact = {
+    gameName: state.gameName,
+    gameFinished: state.gameFinished,
+    players: state.players.map((p) => ({
+      name: p.name,
+      compactInvested: totalBuyIn(p),
+      compactBit: totalByMethod(p, "bit"),
+      compactCash: totalByMethod(p, "cash"),
+      cashOut: p.cashOut === "" ? "" : Number(p.cashOut) || 0,
+      finalCash: Number(p.finalCash) || 0
+    }))
+  };
+  const encoded = btoa(unescape(encodeURIComponent(JSON.stringify(compact))));
+  return `${location.origin}${location.pathname}?view=1#data=${encodeURIComponent(encoded)}`;
+}
+
+function bitTransfersByPlayers(players){
+  const creditors = players
+    .map((p) => ({ name: p.name, amount: remainingBit(p) || 0 }))
+    .filter((p) => p.amount > 0)
+    .sort((a, b) => b.amount - a.amount);
+
+  const debtors = players
+    .map((p) => ({ name: p.name, amount: netResult(p) !== null && netResult(p) < 0 ? Math.abs(netResult(p)) : 0 }))
+    .filter((p) => p.amount > 0)
+    .sort((a, b) => b.amount - a.amount);
+
+  const transfers = [];
+  let i = 0, j = 0;
+  while(i < debtors.length && j < creditors.length){
+    const amount = Math.min(debtors[i].amount, creditors[j].amount);
+    if(amount > 0) transfers.push({ from: debtors[i].name, to: creditors[j].name, amount });
+    debtors[i].amount -= amount;
+    creditors[j].amount -= amount;
+    if(debtors[i].amount < 0.01) i++;
+    if(creditors[j].amount < 0.01) j++;
+  }
+  return transfers;
+}
+
+function render(){
+  els.gameName.value = state.gameName;
+  els.defaultBuyIn.value = state.defaultBuyIn;
+  els.defaultBuyInMethod.value = state.defaultBuyInMethod;
+
+  const totalBuyIns = state.players.reduce((sum, p) => sum + totalBuyIn(p), 0);
+  const totalCashOut = state.players.reduce((sum, p) => sum + (p.cashOut === "" ? 0 : Number(p.cashOut) || 0), 0);
+  const potCash = state.players.reduce((sum, p) => sum + totalByMethod(p, "cash"), 0);
+  const potBit = state.players.reduce((sum, p) => sum + totalByMethod(p, "bit"), 0);
+  const issues = validateGame(state.players);
+  const search = (els.playerSearch?.value || "").toLowerCase();
+  const filteredBase = state.players.filter((p) => p.name.toLowerCase().includes(search));
+
+  if(filteredBase.length && !filteredBase.some((p) => p.id === state.expandedPlayerId)){
+    state.expandedPlayerId = filteredBase[0].id;
+  }
+  const filteredPlayers = filteredBase.slice().sort((a,b) => {
+    if(a.id === state.expandedPlayerId) return -1;
+    if(b.id === state.expandedPlayerId) return 1;
+    return 0;
+  });
+
+  els.topStatsBar.innerHTML = `
+    <div class="stat-chip">👥 ${state.players.length} שחקנים</div>
+    <div class="stat-chip">💰 קופה ${formatCurrency(totalBuyIns)}</div>
+    <div class="stat-chip">💵 מזומן ${formatCurrency(potCash)}</div>
+    <div class="stat-chip">📲 ביט ${formatCurrency(potBit)}</div>
+    <div class="stat-chip">🏁 סופי ${formatCurrency(totalCashOut)}</div>
+    <div class="stat-chip">${state.gameFinished ? "🔒 הסתיים" : "🟢 פתוח"}</div>
+  `;
+
+  els.playerQuickNav.innerHTML = filteredBase.map((p) =>
+    `<button class="${state.expandedPlayerId === p.id ? "active" : ""}" onclick="openPlayer('${p.id}')">${escapeHtml(p.name)}</button>`
+  ).join("");
+
+  els.playersList.innerHTML = filteredPlayers.length ? filteredPlayers.map((player) => {
+    const invested = totalBuyIn(player);
+    const cashOut = player.cashOut === "" ? "" : Number(player.cashOut) || 0;
+    const net = netResult(player);
+    const isOpen = state.expandedPlayerId === player.id;
+    const needBit = remainingBit(player);
+
+    return `
+      <div class="player-item ${isOpen ? "open" : ""}">
+        <button class="player-header" onclick="togglePlayer('${player.id}')">
+          <div>
+            <div class="player-name">${escapeHtml(player.name)}</div>
+            <div class="meta-label">${player.buyIns.length || (player.compactInvested ? 1 : 0)} כניסות</div>
+          </div>
+          <div>
+            <div class="meta-label">השקיע</div>
+            <div class="header-amount">${formatCurrency(invested)}</div>
+          </div>
+          <div>
+            <div class="meta-label">רווח / הפסד</div>
+            <div class="header-amount ${(net === null || net >= 0) ? "good" : "bad"}">${net === null ? "-" : `${net >= 0 ? "+" : "-"}${formatCurrency(Math.abs(net))}`}</div>
+          </div>
+          <div class="chevron">⌄</div>
+        </button>
+
+        <div class="player-body">
+          <div class="chips">
+            ${player.buyIns.length
+              ? player.buyIns.map((b, i) => `<span class="chip">כניסה ${i + 1}: ${formatCurrency(b.amount)} • ${methodLabel(b.method)}</span>`).join("")
+              : `<span class="chip">ביט: ${formatCurrency(totalByMethod(player, "bit"))} • מזומן: ${formatCurrency(totalByMethod(player, "cash"))}</span>`}
+          </div>
+
+          <div class="body-grid">
+            <div class="edit-only">
+              <div class="meta-label">פעולות</div>
+              <div class="quick-actions">
+                <select id="method-${player.id}" ${state.gameFinished ? "disabled" : ""}>
+                  <option value="cash">מזומן</option>
+                  <option value="bit">ביט</option>
+                </select>
+                <button class="secondary" onclick="addBuyIn('${player.id}', 50)" ${state.gameFinished ? "disabled" : ""}>50</button>
+                <button class="secondary" onclick="addBuyIn('${player.id}', 100)" ${state.gameFinished ? "disabled" : ""}>100</button>
+                <button class="secondary" onclick="addBuyIn('${player.id}', 200)" ${state.gameFinished ? "disabled" : ""}>200</button>
+                <button class="secondary" onclick="addCustomBuyIn('${player.id}')" ${state.gameFinished ? "disabled" : ""}>אחר</button>
+                <button class="danger" onclick="removePlayer('${player.id}')" ${state.gameFinished ? "disabled" : ""}>מחק</button>
+              </div>
+            </div>
+
+            <div>
+              <div class="meta-label">פירוט</div>
+              <div class="pill">ביט: ${formatCurrency(totalByMethod(player, "bit"))}</div>
+              <div class="pill">מזומן: ${formatCurrency(totalByMethod(player, "cash"))}</div>
+              ${player.cashOut === "" ? "" : `<div class="pill">נשאר לקבל ביט: ${formatCurrency(needBit)}</div>`}
+            </div>
+
+            <div>
+              <label>סכום סופי</label>
+              <input type="number"
+                value="${cashOut === "" ? "" : cashOut}"
+                placeholder="0"
+                ${(state.gameFinished || VIEW_ONLY) ? "disabled" : ""}
+                onchange="updateCashOut('${player.id}', this.value)"
+                onblur="updateCashOut('${player.id}', this.value)">
+              <label style="margin-top:10px;">מזומן שקיבל בסוף</label>
+              <input type="number"
+                value="${Number(player.finalCash) || 0}"
+                placeholder="0"
+                ${(state.gameFinished || VIEW_ONLY) ? "disabled" : ""}
+                onchange="updateFinalCash('${player.id}', this.value)"
+                onblur="updateFinalCash('${player.id}', this.value)">
+            </div>
+          </div>
+        </div>
+      </div>
+    `;
+  }).join("") : `<div class="empty">אין שחקנים תואמים</div>`;
+
+  els.potBreakdown.innerHTML = `
+    <div class="stat-card">
+      <div class="stat-label">מזומן בקופה</div>
+      <div class="stat-value">${formatCurrency(potCash)}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">ביט בקופה</div>
+      <div class="stat-value">${formatCurrency(potBit)}</div>
+    </div>
+    <div class="stat-card">
+      <div class="stat-label">סה״כ קופה</div>
+      <div class="stat-value">${formatCurrency(potCash + potBit)}</div>
+    </div>
+  `;
+
+  els.issuesList.innerHTML = issues.length
+    ? issues.map((issue) => `<div class="issue">${issue}</div>`).join("")
+    : `<div class="empty">אין בעיות מזוהות</div>`;
+
+  els.summaryList.innerHTML = state.players.length
+    ? state.players.map((player) => {
+        const invested = totalBuyIn(player);
+        const cashOut = player.cashOut === "" ? 0 : Number(player.cashOut) || 0;
+        const net = netResult(player);
+        const finalCash = Number(player.finalCash) || 0;
+        const needBit = remainingBit(player);
+
+        return `
+          <div class="summary-card">
+            <div>
+              <div style="font-weight:800">${escapeHtml(player.name)}</div>
+            </div>
+            <div>
+              <div class="meta-label">השקיע</div>
+              <div>${formatCurrency(invested)}</div>
+              <div class="meta-label">ביט ${formatCurrency(totalByMethod(player, "bit"))} • מזומן ${formatCurrency(totalByMethod(player, "cash"))}</div>
+            </div>
+            <div>
+              <div class="meta-label">סכום סופי</div>
+              <div>${player.cashOut === "" ? "-" : formatCurrency(cashOut)}</div>
+            </div>
+            <div>
+              <div class="meta-label">רווח / הפסד</div>
+              <div class="${net === null || net >= 0 ? "good" : "bad"}" style="font-weight:800">
+                ${net === null ? "-" : `${net >= 0 ? "+" : "-"}${formatCurrency(Math.abs(net))}`}
+              </div>
+            </div>
+            <div>
+              <div class="meta-label">מזומן שקיבל / נשאר לקבל ביט</div>
+              <div>${player.cashOut === "" ? "-" : `${formatCurrency(finalCash)} / ${formatCurrency(needBit)}`}</div>
+            </div>
+          </div>
+        `;
+      }).join("")
+    : `<div class="empty">אין עדיין שחקנים</div>`;
+
+  const transfers = bitTransfersByPlayers(state.players);
+  els.bitTransfers.innerHTML = transfers.length
+    ? transfers.map((t) => `
+        <div class="bititem">
+          <div>
+            <div style="font-weight:800">${escapeHtml(t.from)}</div>
+            <div class="meta-label">צריך להעביר ביט ל-${escapeHtml(t.to)}</div>
+          </div>
+          <div class="amount">${formatCurrency(t.amount)}</div>
+        </div>
+      `).join("")
+    : `<div class="empty">אין עדיין העברות ביט</div>`;
+
+  const winnersWithBit = state.players.filter((p) => p.cashOut !== "" && remainingBit(p) > 0);
+  els.bitList.innerHTML = winnersWithBit.length
+    ? winnersWithBit.map((player) => `
+        <div class="bititem">
+          <div>
+            <div style="font-weight:800">${escapeHtml(player.name)}</div>
+            <div class="meta-label">מזומן שקיבל: ${formatCurrency(Number(player.finalCash) || 0)}</div>
+          </div>
+          <div class="amount">${formatCurrency(remainingBit(player))}</div>
+        </div>
+      `).join("")
+    : `<div class="empty">אין יתרות ביט כרגע</div>`;
+
+  const readonlyLink = buildReadonlyLink();
+  els.shareLink.value = readonlyLink;
+  els.whatsAppShare.href = `https://wa.me/?text=${encodeURIComponent(readonlyLink)}`;
+
+  saveState();
+}
+
+function addPlayer(){
+  if(state.gameFinished || VIEW_ONLY) return;
+  const name = els.newPlayerName.value.trim();
+  if(!name) return;
+  addPlayerWithName(name);
+  state.defaultBuyIn = Number(els.defaultBuyIn.value) || 0;
+  state.defaultBuyInMethod = els.defaultBuyInMethod.value === "bit" ? "bit" : "cash";
+  els.newPlayerName.value = "";
+  render();
+}
+
+function addSelectedPlayers(){
+  if(state.gameFinished || VIEW_ONLY) return;
+  const selected = Array.from(els.presetPlayers.querySelectorAll('input[type="checkbox"]:checked')).map((el) => el.value);
+  selected.forEach((name) => {
+    const methodEl = document.getElementById(`preset-method-${name}`);
+    const method = methodEl && methodEl.value === "bit" ? "bit" : "cash";
+    addPlayerWithName(name, method);
+  });
+  els.presetPlayers.querySelectorAll('input[type="checkbox"]').forEach((el) => el.checked = false);
+  state.defaultBuyIn = Number(els.defaultBuyIn.value) || 0;
+  state.defaultBuyInMethod = els.defaultBuyInMethod.value === "bit" ? "bit" : "cash";
+  render();
+}
+
+function removePlayer(id){
+  if(state.gameFinished || VIEW_ONLY) return;
+  state.players = state.players.filter((p) => p.id !== id);
+  if(state.expandedPlayerId === id) state.expandedPlayerId = state.players[0]?.id || null;
+  render();
+}
+
+function addBuyIn(id, amount){
+  if(state.gameFinished || VIEW_ONLY) return;
+  const methodEl = document.getElementById(`method-${id}`);
+  const method = methodEl && methodEl.value === "bit" ? "bit" : "cash";
+  state.players = state.players.map((p) =>
+    p.id === id ? { ...p, buyIns: [...p.buyIns, { amount, method }] } : p
+  );
+  state.expandedPlayerId = id;
+  render();
+}
+
+function addCustomBuyIn(id){
+  if(state.gameFinished || VIEW_ONLY) return;
+  const value = prompt("הכנס סכום:");
+  const amount = Number(value);
+  if(!Number.isFinite(amount) || amount <= 0) return;
+  addBuyIn(id, amount);
+}
+
+function updateCashOut(id, value){
+  if(state.gameFinished || VIEW_ONLY) return;
+  state.players = state.players.map((p) =>
+    p.id === id ? { ...p, cashOut: value === "" ? "" : Number(value) || 0 } : p
+  );
+  state.expandedPlayerId = id;
+  render();
+}
+
+function updateFinalCash(id, value){
+  if(state.gameFinished || VIEW_ONLY) return;
+  state.players = state.players.map((p) =>
+    p.id === id ? { ...p, finalCash: Number(value) || 0 } : p
+  );
+  state.expandedPlayerId = id;
+  render();
+}
+
+function openPlayer(id){
+  state.expandedPlayerId = id;
+  render();
+  const playersSection = document.getElementById("playersList");
+  if(playersSection) playersSection.scrollIntoView({ behavior:"smooth", block:"start" });
+}
+
+function togglePlayer(id){
+  const nextId = state.expandedPlayerId === id ? null : id;
+  state.expandedPlayerId = nextId;
+  render();
+  if(nextId){
+    const playersSection = document.getElementById("playersList");
+    if(playersSection) playersSection.scrollIntoView({ behavior:"smooth", block:"start" });
+  }
+}
+
+function finishGame(){
+  const issues = validateGame(state.players);
+  if(issues.length){
+    alert("אי אפשר לסיים משחק לפני תיקון הנתונים.");
+    return;
+  }
+  state.gameFinished = true;
+  render();
+}
+
+function resetAll(){
+  if(VIEW_ONLY) return;
+  if(!confirm("לאפס את כל המשחק?")) return;
+  localStorage.removeItem(STORAGE_KEY);
+  state = clone(defaultState);
+  render();
+}
+
+buildPresetPlayers();
+
+els.addPlayerBtn.addEventListener("click", addPlayer);
+els.addSelectedPlayersBtn.addEventListener("click", addSelectedPlayers);
+els.saveNowBtn.addEventListener("click", () => {
+  saveState();
+  const old = els.saveNowBtn.textContent;
+  els.saveNowBtn.textContent = "נשמר";
+  setTimeout(() => { els.saveNowBtn.textContent = old; }, 1200);
+});
+els.resetAllBtn.addEventListener("click", resetAll);
+els.finishGameBtn.addEventListener("click", finishGame);
+els.copyLinkBtn.addEventListener("click", async () => {
+  try {
+    await navigator.clipboard.writeText(els.shareLink.value || "");
+    const old = els.copyLinkBtn.textContent;
+    els.copyLinkBtn.textContent = "הועתק";
+    setTimeout(() => { els.copyLinkBtn.textContent = old; }, 1200);
+  } catch {}
+});
+els.newPlayerName.addEventListener("keydown", (e) => { if(e.key === "Enter") addPlayer(); });
+els.playerSearch.addEventListener("input", () => render());
+els.gameName.addEventListener("change", (e) => { state.gameName = e.target.value; render(); });
+els.gameName.addEventListener("blur", (e) => { state.gameName = e.target.value; render(); });
+els.defaultBuyIn.addEventListener("input", (e) => { state.defaultBuyIn = Number(e.target.value) || 0; saveState(); });
+els.defaultBuyInMethod.addEventListener("change", (e) => { state.defaultBuyInMethod = e.target.value === "bit" ? "bit" : "cash"; saveState(); });
+
+render();
+
+window.removePlayer = removePlayer;
+window.addBuyIn = addBuyIn;
+window.addCustomBuyIn = addCustomBuyIn;
+window.updateCashOut = updateCashOut;
+window.updateFinalCash = updateFinalCash;
+window.togglePlayer = togglePlayer;
+window.openPlayer = openPlayer;
+</script>
+</body>
+</html>
