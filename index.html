@@ -42,11 +42,11 @@ button.danger{background:rgba(251,113,133,.12);border:1px solid rgba(251,113,133
   padding:10px;margin-bottom:10px;border-radius:16px;background:rgba(17,24,39,.92);
   border:1px solid rgba(255,255,255,.1);backdrop-filter:blur(8px)
 }
-.top-stats .chip{padding:8px 10px;border-radius:999px;background:rgba(255,255,255,.08);font-size:13px;color:var(--muted)}
-.main-tabs,.tabs{display:flex;gap:8px;overflow-x:auto;flex-wrap:nowrap;padding-bottom:6px}
-.main-tabs{margin:0 0 10px 0}
-.main-tabs button,.tabs button{
-  min-height:auto;padding:12px 14px;border-radius:999px;white-space:nowrap;
+.top-stats .chip{padding:7px 9px;border-radius:999px;background:rgba(255,255,255,.08);font-size:12px;color:var(--muted)}
+.main-tabs,.tabs{display:flex;gap:6px;overflow-x:auto;flex-wrap:nowrap;padding-bottom:4px;scroll-behavior:smooth;-webkit-overflow-scrolling:touch}
+.main-tabs{margin:0 0 8px 0;padding-inline:2px}
+.main-tabs button,.tabs button{font-size:11px;line-height:1.1;
+  min-height:auto;padding:9px 11px;border-radius:999px;white-space:nowrap;flex:0 0 auto;
   background:rgba(255,255,255,.08);border:1px solid rgba(255,255,255,.12)
 }
 .main-tabs button.active,.tabs button.active{background:linear-gradient(180deg,var(--accent),var(--accent2))}
@@ -70,10 +70,9 @@ select option{color:#111827}
   background:var(--card2);border:1px solid rgba(255,255,255,.08);border-radius:16px;padding:8px 10px
 }
 .preset-row input[type=checkbox]{width:22px;height:22px;accent-color:var(--accent)}
-.player-card,.summary-card,.stat-box,.issue,.bit-box,.preset-chip{
+.player-card,.summary-card,.stat-box,.issue,.bit-box{
   background:var(--card2);border:1px solid rgba(255,255,255,.08);border-radius:18px;padding:14px
 }
-.preset-chip{display:flex;justify-content:space-between;align-items:center}
 .player-head{display:grid;grid-template-columns:1.2fr 1fr 1fr;gap:10px;align-items:center}
 .player-name{font-size:22px;font-weight:800}
 .meta-label{font-size:12px;color:var(--soft);margin-bottom:6px}
@@ -114,7 +113,9 @@ select option{color:#111827}
 
   <div class="main-tabs">
     <button id="mainTabGame" class="active" onclick="switchMainTab('game')">משחק</button>
-    <button id="mainTabPresets" onclick="switchMainTab('presets')">שחקנים קבועים</button>
+    <button id="mainTabPresets" onclick="switchMainTab('presets')">שחקנים</button>
+    <button id="mainTabSummary" onclick="switchMainTab('summary')">סיכומים</button>
+    <button id="mainTabBit" onclick="switchMainTab('bit')">העברות ביט</button>
   </div>
 
   <div id="mainSectionGame" class="main-section active">
@@ -122,29 +123,10 @@ select option{color:#111827}
       <div class="stack">
         <section class="card">
           <div class="card-inner">
-            <div class="card-title">משחק</div>
+            <div class="card-title">משחק</div><div class="meta-label" style="margin-bottom:8px">הוספת שחקנים ואורחים נמצאת בלשונית "שחקנים"</div>
             <div class="field">
               <label for="gameName">שם המשחק</label>
               <input id="gameName" placeholder="שם המשחק">
-            </div>
-
-            <div class="form-grid" style="margin-top:12px">
-              <div class="field">
-                <label for="newPlayerName">שחקן חדש</label>
-                <input id="newPlayerName" placeholder="שם שחקן">
-              </div>
-              <div class="field">
-                <label for="defaultBuyIn">כניסה התחלתית</label>
-                <input id="defaultBuyIn" type="number" value="50">
-              </div>
-              <div class="field">
-                <label for="defaultBuyInMethod">אמצעי</label>
-                <select id="defaultBuyInMethod">
-                  <option value="cash" selected>מזומן</option>
-                  <option value="bit">ביט</option>
-                </select>
-              </div>
-              <button id="addPlayerBtn">הוסף</button>
             </div>
           </div>
         </section>
@@ -173,27 +155,6 @@ select option{color:#111827}
             <div id="issuesList" class="issues"></div>
           </div>
         </section>
-
-        <section class="card">
-          <div class="card-inner">
-            <div class="card-title">סיכום לפי שחקן</div>
-            <div id="summaryList" class="summary-grid" style="display:grid"></div>
-          </div>
-        </section>
-
-        <section class="card">
-          <div class="card-inner">
-            <div class="card-title">סיכום העברות ביט</div>
-            <div id="bitTransfers" class="bit-grid" style="display:grid"></div>
-          </div>
-        </section>
-
-        <section class="card">
-          <div class="card-inner">
-            <div class="card-title">כמה כל שחקן עוד צריך לקבל בביט</div>
-            <div id="bitOutstanding" class="bit-grid" style="display:grid"></div>
-          </div>
-        </section>
       </div>
     </div>
   </div>
@@ -201,19 +162,68 @@ select option{color:#111827}
   <div id="mainSectionPresets" class="main-section">
     <section class="card">
       <div class="card-inner">
-        <div class="card-title">שחקנים קבועים</div>
+        <div class="card-title">שחקנים</div>
         <div class="field" style="margin-bottom:12px">
-          <label>בחר שחקנים קבועים להוספה למשחק</label>
+          <label>בחר שחקנים להוספה למשחק</label>
           <div id="presetPlayers" class="preset-list"></div>
         </div>
         <button id="addSelectedPlayersBtn">הוסף נבחרים למשחק</button>
+      </div>
+    </section>
+
+    <section class="card" style="margin-top:14px">
+      <div class="card-inner">
+        <div class="card-title">שחקן אורח</div>
+        <div class="form-grid">
+          <div class="field">
+            <label for="newPlayerName">שחקן חדש</label>
+            <input id="newPlayerName" placeholder="שם שחקן">
+          </div>
+          <div class="field">
+            <label for="defaultBuyIn">כניסה התחלתית</label>
+            <input id="defaultBuyIn" type="number" value="50">
+          </div>
+          <div class="field">
+            <label for="defaultBuyInMethod">אמצעי</label>
+            <select id="defaultBuyInMethod">
+              <option value="cash" selected>מזומן</option>
+              <option value="bit">ביט</option>
+            </select>
+          </div>
+          <button id="addPlayerBtn">הוסף</button>
+        </div>
+      </div>
+    </section>
+  </div>
+
+  <div id="mainSectionSummary" class="main-section">
+    <section class="card">
+      <div class="card-inner">
+        <div class="card-title">סיכום לפי שחקן</div>
+        <div id="summaryList" class="summary-grid" style="display:grid"></div>
+      </div>
+    </section>
+  </div>
+
+  <div id="mainSectionBit" class="main-section">
+    <section class="card" style="margin-bottom:14px">
+      <div class="card-inner">
+        <div class="card-title">סיכום העברות ביט</div>
+        <div id="bitTransfers" class="bit-grid" style="display:grid"></div>
+      </div>
+    </section>
+
+    <section class="card">
+      <div class="card-inner">
+        <div class="card-title">כמה כל שחקן עוד צריך לקבל בביט</div>
+        <div id="bitOutstanding" class="bit-grid" style="display:grid"></div>
       </div>
     </section>
   </div>
 </div>
 
 <script>
-const STORAGE_KEY = "poker-tabs-main-v1";
+const STORAGE_KEY = "poker-tabs-main-v2";
 const PRESET_PLAYERS = ["יגאל","ליאור","דניאל","ניר","ניסן","דין","זוהר","מני","אשר","רומן","איתי"];
 
 const els = {
@@ -238,8 +248,12 @@ const els = {
   bitOutstanding: document.getElementById("bitOutstanding"),
   mainTabGame: document.getElementById("mainTabGame"),
   mainTabPresets: document.getElementById("mainTabPresets"),
+  mainTabSummary: document.getElementById("mainTabSummary"),
+  mainTabBit: document.getElementById("mainTabBit"),
   mainSectionGame: document.getElementById("mainSectionGame"),
-  mainSectionPresets: document.getElementById("mainSectionPresets")
+  mainSectionPresets: document.getElementById("mainSectionPresets"),
+  mainSectionSummary: document.getElementById("mainSectionSummary"),
+  mainSectionBit: document.getElementById("mainSectionBit")
 };
 
 const defaultState = {
@@ -343,8 +357,12 @@ function switchMainTab(tab){
   state.mainTab = tab;
   els.mainTabGame.classList.toggle("active", tab==="game");
   els.mainTabPresets.classList.toggle("active", tab==="presets");
+  els.mainTabSummary.classList.toggle("active", tab==="summary");
+  els.mainTabBit.classList.toggle("active", tab==="bit");
   els.mainSectionGame.classList.toggle("active", tab==="game");
   els.mainSectionPresets.classList.toggle("active", tab==="presets");
+  els.mainSectionSummary.classList.toggle("active", tab==="summary");
+  els.mainSectionBit.classList.toggle("active", tab==="bit");
   saveState();
 }
 
